@@ -1,3 +1,7 @@
 *.swp
 docker/config/*
 !docker/config/README.md
+
+build-configurations/*
+!build-configurations/DEFAULT.json
+!build-configurations/README.md
