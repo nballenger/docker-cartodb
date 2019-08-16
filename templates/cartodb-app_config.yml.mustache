@@ -15,10 +15,10 @@ defaults: &defaults
   session_domain:     '{{{stack_fqdn}}}'   # MUSTACHE. Was: 'cartodb.localhost'
   # If activated, urls will use usernames in format //SESSION_DOMAIN/user/USERNAME and ignore subdomains if present
   subdomainless_urls: true
-  http_port:          '{{{cartodb_listen_port}}}' # MUSTACHE. Was: empty
-  https_port:         443
+  http_port:
+  https_port:
   secret_token:       '{{{cartodb_secret_token}}}' # MUSTACHE
-  account_host:       '{{{stack_fqdn}}}'  # MUSTACHE. Was: 'cartodb.localhost:3000'
+  account_host:       '{{{stack_fqdn}}}:{{{cartodb_listen_port}}}'  # MUSTACHE. Was: 'cartodb.localhost:3000'
   # Here you can define other hosts different to account_host that also will be CORS enabled
   # cors_enabled_hosts:
   #   - example.com
@@ -37,7 +37,7 @@ defaults: &defaults
     internal:
       protocol:      '{{{windshaft_scheme}}}'   # MUSTACHE. Was: 'http'
       domain:        '{{{windshaft_host}}}'     # MUSTACHE. Was: 'cartodb.localhost'
-      port:          '{{{windshaft_port}}}'     # MUSTACHE. Was: '80'
+      port:          '{{{windshaft_listen_port}}}'     # MUSTACHE. Was: '80'
       verifycert:    false
     private:    
       protocol:      '{{{stack_scheme}}}'       # MUSTACHE. Was: 'http'
@@ -140,7 +140,7 @@ defaults: &defaults
   #   host: '{{{postgis_host}}}'                     # MUSTACHE. Was 'localhost'
   #   port: '{{{postgis_listen_port}}}'                          # MUSTACHE. Was '5432'
   #   dbname: '{{{geocoder_db_name}}}'             # MUSTACHE. Was 'dataservices_db'
-  #   username: '{{{geocoder_user_name}}}'              # MUSTACHE. Was 'geocoder_api'
+  #   username: '{{{geocoder_pg_role_name}}}'              # MUSTACHE. Was 'geocoder_api'
   #   password: ''
   #   tables:
   #     admin0: 'ne_admin0_v3'
@@ -220,7 +220,7 @@ defaults: &defaults
     #   host: '{{{postgis_host}}}'           # MUSTACHE. Was 'localhost'
     #   port: '{{{postgis_listen_port}}}'                # MUSTACHE. Was '5432'
     #   dbname: '{{{geocoder_db_name}}}'   # MUSTACHE. Was 'dataservices_db'
-    #   user: '{{{geocoder_user_name}}}'        # MUSTACHE. Was 'geocoder_api'
+    #   user: '{{{geocoder_pg_role_name}}}'        # MUSTACHE. Was 'geocoder_api'
   user_migrator:
     user_exports_folder: '/tmp/user_exports'
     user_imports_folder: '/tmp/user_imports'

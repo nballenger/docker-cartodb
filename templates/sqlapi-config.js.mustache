@@ -25,7 +25,7 @@ var config = {
     base_url:   '(?:/api/:version|/user/:user/api/:version)',
     useProfiler:    true,
     log_format: '[:date] :remote-addr :method :req[Host]:url :status :response-time ms -> :res[Content-Type] (:res[X-SQLAPI-Profiler])',
-    log_filename: 'logs/cartodb-sql-api.log'
+    log_filename: 'logs/cartodb-sql-api.log',
     user_from_host: '^([^\\.]+)\\.',
     node_host:  '0.0.0.0',
     node_socket_timeout: 600000,
@@ -60,7 +60,7 @@ var config = {
     },
     disabled_file: 'pids/disabled',
 
-    ratelimits = {
+    ratelimits: {
         rateLimitsEnabled: false,
         endpoints: {
             query: false,

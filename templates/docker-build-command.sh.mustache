@@ -1,0 +1,31 @@
+#!/bin/bash -e
+SCRIPT_NAME=$0
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
+
+DOCKER_BUILD_DIR="${SCRIPT_DIR}/docker"
+
+docker build --tag env-aware-sver:NICKTEST \
+    --build-arg CRANKSHAFT_VERSION="{{{crankshaft_version}}}" \
+    --build-arg SQLAPI_VERSION="{{{sqlapi_version}}}" \
+    --build-arg WINDSHAFT_VERSION="{{{windshaft_version}}}" \
+    --build-arg CARTODB_VERSION="{{{cartodb_version}}}" \
+    --build-arg DATASERVICES_VERSION="{{{dataservices_version}}}" \
+    --build-arg DATASERVICES_API_SERVER_VERSION="{{{dataservices_api_server_version}}}" \
+    --build-arg DATASERVICES_API_CLIENT_VERSION="{{{dataservices_api_client_version}}}" \
+    --build-arg OBSERVATORY_VERSION="{{{observatory_version}}}" \
+    --build-arg CARTO_ENV="{{{carto_env}}}" \
+    --build-arg USER_ACCOUNT_USER_NAME="{{{user_account_user_name}}}" \
+    --build-arg USER_ACCOUNT_EMAIL="{{{user_account_email}}}" \
+    --build-arg USER_ACCOUNT_PASSWORD="{{{user_account_password}}}" \
+    --build-arg USER_ADMIN_PASSWORD="{{{user_admin_password}}}" \
+    --build-arg ORG_ACCOUNT_ORG_NAME="{{{org_account_org_name}}}" \
+    --build-arg ORG_ACCOUNT_USER_NAME="{{{org_account_user_name}}}" \
+    --build-arg ORG_ACCOUNT_EMAIL="{{{org_account_email}}}" \
+    --build-arg ORG_ACCOUNT_PASSWORD="{{{org_account_password}}}" \
+    --build-arg GEOCODER_PG_ROLE_NAME="{{{geocoder_pg_role_name}}}" \
+    --build-arg GEOCODER_DB_NAME="{{{geocoder_db_name}}}" \
+    --build-arg VARNISH_HTTP_PORT="{{{varnish_http_port}}}" \
+    --build-arg CARTODB_LISTEN_PORT="{{{cartodb_listen_port}}}" \
+    --build-arg STACK_SCHEME="{{{stack_scheme}}}" \
+    --build-arg STACK_FQDN="{{{stack_fqdn}}}" \
+    $DOCKER_BUILD_DIR

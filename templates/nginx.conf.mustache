@@ -27,6 +27,7 @@ http {
     gzip on;
 
     server {
+      listen {{{stack_listen_port}}};
       server_name   {{{stack_fqdn}}};       # MUSTACHE
       client_max_body_size  0;
 
