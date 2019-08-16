@@ -5,7 +5,7 @@ SCRIPT_NAME=$0
 
 # Required
 CARTO_ENV="${CARTO_ENV}"
-USER_ACCOUNT_NAME="${USER_ACCOUNT_NAME}"
+USER_ACCOUNT_USER_NAME="${USER_ACCOUNT_USER_NAME}"
 USER_ACCOUNT_PASSWORD="${USER_ACCOUNT_PASSWORD}"
 USER_ADMIN_PASSWORD="${USER_ADMIN_PASSWORD}"
 USER_ACCOUNT_EMAIL="${USER_ACCOUNT_EMAIL}"
@@ -29,7 +29,7 @@ PG_CONN="-U ${DB_ADMIN} -h ${PG_HOST} -p ${PG_PORT}"
 
 #### Env var validation ######################################################
 
-REQUIRED_ENV_VARS=(CARTO_ENV USER_ACCOUNT_NAME USER_ACCOUNT_PASSWORD
+REQUIRED_ENV_VARS=(CARTO_ENV USER_ACCOUNT_USER_NAME USER_ACCOUNT_PASSWORD
                    USER_ADMIN_PASSWORD USER_ACCOUNT_EMAIL GEOCODER_DB_NAME
                    ORG_ACCOUNT_ORG_NAME ORG_ACCOUNT_USER_NAME ORG_ACCOUNT_EMAIL
                    ORG_ACCOUNT_PASSWORD)
@@ -50,29 +50,34 @@ fi
 
 export RAILS_ENV=${CARTO_ENV}
 
-echo "--- Creating the default Carto user, '${USER_ACCOUNT_NAME}'..."
-bundle exec rake cartodb:db:create_user --trace \
-    SUBDOMAIN="${USER_ACCOUNT_NAME}" \
-    PASSWORD="${USER_ACCOUNT_PASSWORD}" \
-    ADMIN_PASSWORD="${USER_ADMIN_PASSWORD}" \
-    EMAIL="${USER_ACCOUNT_EMAIL}"
+cd /cartodb
 
-echo "--- Setting quotas for user '${USER_ACCOUNT_NAME}'..."
-bundle exec rake cartodb:db:set_user_quota["${USER_ACCOUNT_NAME}",102400]
-bundle exec rake cartodb:db:set_unlimited_table_quota["${USER_ACCOUNT_NAME}"]
-bundle exec rake cartodb:db:set_user_private_tables_enabled["${USER_ACCOUNT_NAME}",'true']
-bundle exec rake cartodb:db:set_user_account_type["${USER_ACCOUNT_NAME}",'[DEDICATED]']
-bundle exec rake cartodb:db:configure_geocoder_extension_for_non_org_users["${USER_ACCOUNT_NAME}"]
+dev_user_exists=$(psql -qAt $PG_CONN -d $PG_METADATA_DB -c "SELECT 1 FROM users WHERE username = '$USER_ACCOUNT_USER_NAME' AND email = '$USER_ACCOUNT_EMAIL'")
 
-echo "--- Enabling sync tables for user '${USER_ACCOUNT_NAME}'..."
-cat <<EOF | psql $PG_CONN -d $PG_METADATA_DB
-UPDATE users SET sync_tables_enabled=true WHERE username='${USER_ACCOUNT_NAME}';
+if [[ -z $dev_user_exists ]]; then
+    echo "--- Creating the default Carto user, '${USER_ACCOUNT_USER_NAME}'..."
+    bundle exec rake cartodb:db:create_user --trace \
+        SUBDOMAIN="${USER_ACCOUNT_USER_NAME}" \
+        PASSWORD="${USER_ACCOUNT_PASSWORD}" \
+        ADMIN_PASSWORD="${USER_ADMIN_PASSWORD}" \
+        EMAIL="${USER_ACCOUNT_EMAIL}"
+
+    echo "--- Setting quotas for user '${USER_ACCOUNT_USER_NAME}'..."
+    bundle exec rake cartodb:db:set_user_quota["${USER_ACCOUNT_USER_NAME}",102400]
+    bundle exec rake cartodb:db:set_unlimited_table_quota["${USER_ACCOUNT_USER_NAME}"]
+    bundle exec rake cartodb:db:set_user_private_tables_enabled["${USER_ACCOUNT_USER_NAME}",'true']
+    bundle exec rake cartodb:db:set_user_account_type["${USER_ACCOUNT_USER_NAME}",'[DEDICATED]']
+    bundle exec rake cartodb:db:configure_geocoder_extension_for_non_org_users["${USER_ACCOUNT_USER_NAME}"]
+
+    echo "--- Enabling sync tables for user '${USER_ACCOUNT_USER_NAME}'..."
+    cat <<EOF | psql $PG_CONN -d $PG_METADATA_DB
+UPDATE users SET sync_tables_enabled=true WHERE username='${USER_ACCOUNT_USER_NAME}';
 EOF
 
-echo "--- Setting up dataservices client for user '${USER_ACCOUNT_NAME}'..."
-select_stmt="SELECT database_name FROM users WHERE username='${USER_ACCOUNT_NAME}';"
-USER_ACCOUNT_DB=$(psql $PG_CONN -d $PG_METADATA_DB --tuples-only --no-align -c $select_stmt)
-cat <<EOF | psql $PG_CONN -d $USER_ACCOUNT_DB
+    echo "--- Setting up dataservices client for user '${USER_ACCOUNT_USER_NAME}'..."
+    select_stmt="SELECT database_name FROM users WHERE username='${USER_ACCOUNT_USER_NAME}';"
+    USER_ACCOUNT_DB=$(psql $PG_CONN -d $PG_METADATA_DB --tuples-only --no-align -c "$select_stmt")
+    cat <<EOF | psql $PG_CONN -d $USER_ACCOUNT_DB
 CREATE EXTENSION IF NOT EXISTS cdb_dataservices_client;
 
 SELECT CDB_Conf_SetConf(
@@ -86,35 +91,46 @@ SELECT CDB_Conf_SetConf(
 );
 EOF
 
+else
+    echo "Dev user with subdomain/username '${USER_ACCOUNT_USER_NAME}' and email '${USER_ACCOUNT_EMAIL}' exists in database '$PG_METADATA_DB', skipping create."
+fi
+
 #### Create the default organization account #################################
 
-echo "--- Creating the default Carto organization user account, '${ORG_ACCOUNT_USER_NAME}'..."
-bundle exec rake cartodb:db:create_user --trace \
-    SUBDOMAIN="${ORG_ACCOUNT_USER_NAME}" \
-    PASSWORD="${ORG_ACCOUNT_PASSWORD}" \
-    EMAIL="${ORG_ACCOUNT_EMAIL}"
+org_user_exists=$(psql -qAt $PG_CONN -d $PG_METADATA_DB -c "SELECT 1 FROM users WHERE username = '$ORG_ACCOUNT_USER_NAME' AND email = '$ORG_ACCOUNT_EMAIL';")
 
-echo "--- Setting quotas for org user '${ORG_ACCOUNT_USER_NAME}'..."
-bundle exec rake cartodb:db:set_unlimited_table_quota["${ORG_ACCOUNT_USER_NAME}"]
+if [[ -z $org_user_exists ]]; then
+    echo "--- Creating the default Carto organization user account, '${ORG_ACCOUNT_USER_NAME}'..."
+    bundle exec rake cartodb:db:create_user --trace \
+        SUBDOMAIN="${ORG_ACCOUNT_USER_NAME}" \
+        PASSWORD="${ORG_ACCOUNT_PASSWORD}" \
+        EMAIL="${ORG_ACCOUNT_EMAIL}"
 
-echo "--- Creating the organization '${ORG_ACCOUNT_ORG_NAME}' with owner '${ORG_ACCOUNT_USER_NAME}'..."
-bundle exec rake cartodb:db:create_new_organization_with_owner \
-    ORGANIZATION_NAME="${ORG_ACCOUNT_ORG_NAME}" \
-    USERNAME="${ORG_ACCOUNT_USER_NAME}" \
-    ORGANIZATION_SEATS=100 \
-    ORGANIZATION_QUOTA==102400 \
-    ORGANIZATION_DISPLAY_NAME="${ORG_ACCOUNT_ORG_NAME}"
+    echo "--- Setting quotas for org user '${ORG_ACCOUNT_USER_NAME}'..."
+    bundle exec rake cartodb:db:set_unlimited_table_quota["${ORG_ACCOUNT_USER_NAME}"]
 
-echo "--- Setting organization quota for org '${ORG_ACCOUNT_ORG_NAME}'..."
-bundle exec rake cartodb:db:set_organization_quota[${ORG_ACCOUNT_ORG_NAME},5000]
+    echo "--- Creating the organization '${ORG_ACCOUNT_ORG_NAME}' with owner '${ORG_ACCOUNT_USER_NAME}'..."
+    bundle exec rake cartodb:db:create_new_organization_with_owner \
+        ORGANIZATION_NAME="${ORG_ACCOUNT_ORG_NAME}" \
+        USERNAME="${ORG_ACCOUNT_USER_NAME}" \
+        ORGANIZATION_SEATS=100 \
+        ORGANIZATION_QUOTA=102400 \
+        ORGANIZATION_DISPLAY_NAME="${ORG_ACCOUNT_ORG_NAME}"
 
-echo "--- Setting up geocoder for org '${ORG_ACCOUNT_ORG_NAME}'..."
-bundle exec rake cartodb:db:configure_geocoder_extension_for_organizations[${ORG_ACCOUNT_ORG_NAME}]
+    echo "--- Setting organization quota for org '${ORG_ACCOUNT_ORG_NAME}'..."
+    bundle exec rake cartodb:db:set_organization_quota[${ORG_ACCOUNT_ORG_NAME},5000]
 
-cat <<EOF | psql $PG_CONN -d $PG_METADATA_DB
+    echo "--- Setting up geocoder for org '${ORG_ACCOUNT_ORG_NAME}'..."
+    bundle exec rake cartodb:db:configure_geocoder_extension_for_organizations[${ORG_ACCOUNT_ORG_NAME}]
+
+    cat <<EOF | psql $PG_CONN -d $PG_METADATA_DB
 UPDATE users SET sync_tables_enabled=true WHERE username='${ORG_ACCOUNT_USER_NAME}';
 UPDATE users SET private_maps_enabled = 't';
 EOF
+
+else
+    echo "Org user '$ORG_ACCOUNT_USER_NAME' with email '$ORG_ACCOUNT_EMAIL' already exists, skipping create."
+fi
 
 #### Enable the new dashboard for all users ##################################
 

@@ -1,4 +1,4 @@
-#!bin/bash -e
+#!/bin/bash -e
 SCRIPT_NAME=$0
 
 #### Variables from environment vars #########################################
@@ -69,8 +69,8 @@ EOF
 
 # Create role and database
 createuser $PG_CONN $GEOCODER_PG_ROLE_NAME
-createdb $PG_CONN -T $TEMPLATE_DB -E UTF8 --lc-collate='en_US.utf8' \
-    --lc-ctype='en_US.utf8' $GEOCODER_DB_NAME
+createdb $PG_CONN -T $TEMPLATE_DB -E UTF8 --lc-collate='en_US.UTF-8' \
+    --lc-ctype='en_US.UTF-8' $GEOCODER_DB_NAME
 
 # Install extensions
 cat <<EOF | psql $PG_CONN -d $GEOCODER_DB_NAME -e
@@ -138,7 +138,7 @@ SELECT cartodb.cdb_conf_setconf(
 
 SELECT cartodb.cdb_conf_setconf(
     'data_observatory_conf', 
-    '{"connection": {"whitelist": ["ethervoid"], "production": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "staging": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "development": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "monthly_quota": 100000}'
+    '{"connection": {"whitelist": ["ethervoid"], "production": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "staging": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "development": "host=${PG_HOST} port=${PG_PORT} dbname=${GEOCODER_DB_NAME} user=${GEOCODER_PG_ROLE_NAME}", "monthly_quota": 100000}}'
 );
 EOF
 
@@ -153,8 +153,3 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA cdb_observatory TO $GEOCODER_PG_ROLE_NA
 GRANT SELECT ON ALL TABLES IN SCHEMA observatory TO $GEOCODER_PG_ROLE_NAME;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA observatory TO $GEOCODER_PG_ROLE_NAME;
 EOF
-
-#### Create the metadata databases ###########################################
-
-echo "--- Creating databases with rake cartodb:db:setup..."
-RAILS_ENV=${CARTO_ENV} bundle exec rake cartodb:db:setup
