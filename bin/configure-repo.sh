@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 SCRIPT_NAME=$0
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
 REPO_ROOT="$(dirname ${SCRIPT_DIR})"
@@ -7,8 +7,23 @@ function display_help() {
     local help_text=""
     IFS='' read -r -d '' help_text <<EOF
     
-Usage: $SCRIPT_NAME
+Usage: $SCRIPT_NAME [-h|--help] [-c|--conf CONF_NAME]
+
+Purpose: Looks for a file at 'build-configurations/CONF_NAME.json', and uses
+         the values defined there to populate the Mustache templates in the
+         templates directory, with output going to files in docker/config,
+         and the docker-build-command.sh script in the repo root.
+
+Options:    -h|--help           Display this message and exit.
+
+            -c|--conf CONF_NAME Specify the build configuration file to use.
+                                If none is specified, the DEFAULT.json file is
+                                used. Note that you do not need to include the
+                                .json file extension.
+
 EOF
+
+    printf "$help_text"
 }
 
 BUILD_CONF="DEFAULT"
@@ -29,6 +44,9 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Remove .json extension if present
+BUILD_CONF=$(echo $BUILD_CONF | sed 's/.json$//')
 
 TEMPLATES_DIR="${REPO_ROOT}/templates"
 DOCKER_CONF_DIR="${REPO_ROOT}/docker/config"

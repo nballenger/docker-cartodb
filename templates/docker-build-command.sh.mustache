@@ -16,6 +16,10 @@ Purpose: Triggers a Docker build using the appropriate --build-arg flags and
          values from the build configuration this script was generated from.
          View the file source or templates/docker-build-command.sh.mustache
          to see the merge values.
+
+         Note that this file is dynamically generated to use specific build
+         arguments, and should not be put into version control. To alter it,
+         make changes to templates/docker-build-command.sh.mustache.
 EOF
 }
 

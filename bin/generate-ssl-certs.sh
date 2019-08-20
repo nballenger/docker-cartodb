@@ -15,6 +15,35 @@ Usage: $SCRIPT_NAME [<OPTIONS>]
 
 Purpose: Generates certificates for configuring the stack to use HTTPS locally.
 
+         The script generates the following files, in 'docker/ssl', based on
+         the values given for SUBDOMAIN and DOMAIN. Assuming the defaults of
+         'cartodb' and 'localhost', those files would be:
+
+           cartodbCA.key            Cryptographic key that the Certificate
+                                    Authority root certificate is based on.
+
+           cartodbCA.pem            The Certificate Authority root certificate.
+
+           cartodbCA.srl            List of serial numbers already used by the
+                                    CA to create unique certificates.
+
+           cartodb.localhost.key    Cryptographic key that the SSL certificate
+                                    is based on.
+
+           cartodb.localhost.csr    Certificate signing request for the SSL
+                                    certificate, which allows it to be signed
+                                    via the Certificate Authority root cert.
+
+           cartodb.localhost.crt    SSL certificate generated using the SSL key,
+                                    the CA root certificate, and the certificate
+                                    signing request.
+
+         Note: If the cartodbCA.key and cartodbCA.pem files are found to
+               already exist, they will not be recreated unless you use the
+               --force flag. This is so that you won't have to reimport the
+               .pem file into your development machine's trusted CA list every
+               time you regenerate the SSL certificates.
+
 Options:    -h|--help       Display this message and exit.
 
             -f|--force      (Re-)generate the CA root certificate, even if one
@@ -25,14 +54,33 @@ Options:    -h|--help       Display this message and exit.
 
             -q|--quiet      Suppress incidental output.
 
-            --subdomain <STRING>
-            --domain <STRING>
-            --country <STRING>
-            --state <STRING>
-            --locality <STRING>
-            --organization <STRING>
-            --org-unit <STRING>
-            --email <EMAIL>
+            --subdomain <STRING>    Subdomain to use in constructing the FQDN
+                                    used as the 'Common Name' in generating the
+                                    SSL certificate for the host. Defaults to
+                                    'cartodb'.
+
+            --domain <STRING>       Domain + TLD to use in constructing the
+                                    FQDN used as the 'Common Name' in the
+                                    SSL certificate for the host.
+                                    Defaults to 'localhost'.
+
+            --country <STRING>      Two letter country code used in generating
+                                    the SSL certificate. Defaults to 'US'.
+
+            --state <STRING>        State used in generating the SSL certificate.
+                                    Defaults to 'Vermont'.
+
+            --locality <STRING>     Locality used in generating the SSL cert.
+                                    Defaults to 'Hartland'.
+
+            --organization <STRING> Organization name used in generating the
+                                    SSL cert. Defaults to 'OSS-Carto-Org'.
+
+            --org-unit <STRING>     Organization unit used in generating the
+                                    SSL cert. Defaults to 'Engineering'.
+
+            --email <EMAIL>         Email address used in the certificate.
+                                    Defaults to 'noreply@example.com'.
 EOF
 
     printf "$help_text"
