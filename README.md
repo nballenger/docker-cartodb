@@ -3,7 +3,7 @@
 Instructions (assumes Linux or Mac OS):
 
 1. Clone the repository.
-1. Run `make install`. This will:
+1. In the repo root, run `make install`. This will:
     1. Generate SSL certificate files (including a root signing authority) for the hostname `osscarto-single.localhost`.
     1. Generate configuration files for the various parts of the OSS Carto stack, in `docker/config`
     1. Generate scripts for building and interacting with a Docker image/container.
