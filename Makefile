@@ -57,6 +57,6 @@ stop:
 	bin/generated/docker-stop-command.sh -t $(repo)
 
 clean:
-	rm bin/generated/*.sh
-	rm docker/config/*.js docker/config/*.conf docker/config/*.yml docker/config/*.vcl
-	rm docker/ssl/*.crt docker/ssl/*.key docker/ssl/*.pem docker/ssl/*.srl docker/ssl/*.csr
+	rm -f bin/generated/*.sh
+	rm -f docker/config/*.js docker/config/*.conf docker/config/*.yml docker/config/*.vcl
+	rm -f docker/ssl/*.crt docker/ssl/*.key docker/ssl/*.pem docker/ssl/*.srl docker/ssl/*.csr
