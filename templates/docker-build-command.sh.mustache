@@ -1,0 +1,69 @@
+#!/bin/bash -e
+SCRIPT_NAME=$0
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
+REPO_ROOT="$(dirname "$(dirname ${SCRIPT_DIR})")"
+
+DOCKER_CONTEXT_DIR="${REPO_ROOT}/docker"
+
+BUILD_CONF="DEFAULT"
+REPO_TAG="osscarto-single:$BUILD_CONF"
+
+function display_help {
+    local help_text=''
+    IFS='' read -r -d '' help_text <<EOF
+
+Usage: $SCRIPT_NAME [-t|--tag repository:tag]
+
+Purpose: Triggers a Docker build using the appropriate --build-arg flags and
+         values from the build configuration this script was generated from.
+         View the file source or templates/docker-build-command.sh.mustache
+         to see the merge values.
+
+         Note that this file is dynamically generated to use specific build
+         arguments, and should not be put into version control. To alter it,
+         make changes to templates/docker-build-command.sh.mustache.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            display_help
+            exit 0
+            ;;
+        -t|--tag)
+            shift
+            REPO_TAG=$1
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+docker build --tag ${REPO_TAG} \
+    --build-arg CRANKSHAFT_VERSION="{{{crankshaft_version}}}" \
+    --build-arg SQLAPI_VERSION="{{{sqlapi_version}}}" \
+    --build-arg WINDSHAFT_VERSION="{{{windshaft_version}}}" \
+    --build-arg CARTODB_VERSION="{{{cartodb_version}}}" \
+    --build-arg DATASERVICES_VERSION="{{{dataservices_version}}}" \
+    --build-arg DATASERVICES_API_SERVER_VERSION="{{{dataservices_api_server_version}}}" \
+    --build-arg DATASERVICES_API_CLIENT_VERSION="{{{dataservices_api_client_version}}}" \
+    --build-arg OBSERVATORY_VERSION="{{{observatory_version}}}" \
+    --build-arg CARTO_ENV="{{{carto_env}}}" \
+    --build-arg USER_ACCOUNT_USER_NAME="{{{user_account_user_name}}}" \
+    --build-arg USER_ACCOUNT_EMAIL="{{{user_account_email}}}" \
+    --build-arg USER_ACCOUNT_PASSWORD="{{{user_account_password}}}" \
+    --build-arg USER_ADMIN_PASSWORD="{{{user_admin_password}}}" \
+    --build-arg ORG_ACCOUNT_ORG_NAME="{{{org_account_org_name}}}" \
+    --build-arg ORG_ACCOUNT_USER_NAME="{{{org_account_user_name}}}" \
+    --build-arg ORG_ACCOUNT_EMAIL="{{{org_account_email}}}" \
+    --build-arg ORG_ACCOUNT_PASSWORD="{{{org_account_password}}}" \
+    --build-arg GEOCODER_PG_ROLE_NAME="{{{geocoder_pg_role_name}}}" \
+    --build-arg GEOCODER_DB_NAME="{{{geocoder_db_name}}}" \
+    --build-arg VARNISH_HTTP_PORT="{{{varnish_http_port}}}" \
+    --build-arg CARTODB_LISTEN_PORT="{{{cartodb_listen_port}}}" \
+    --build-arg STACK_SCHEME="{{{stack_scheme}}}" \
+    --build-arg STACK_FQDN="{{{stack_fqdn}}}" \
+    $DOCKER_CONTEXT_DIR

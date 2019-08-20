@@ -1,1 +1,15 @@
-/cartodb_pgdata
+*.swp
+
+docker/config/*
+!docker/config/README.md
+
+docker/ssl/*
+!docker/ssl/README.md
+
+build-configurations/*
+!build-configurations/DEFAULT.json
+!build-configurations/README.md
+!build-configurations/examples
+
+bin/generated/*
+!bin/generated/README.md

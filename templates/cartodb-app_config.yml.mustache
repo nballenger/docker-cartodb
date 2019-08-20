@@ -1,3 +1,5 @@
+# vim: set syntax=yaml:
+
 defaults: &defaults
   # If uncommented, most images like static map previews and twitter card image urls will use this CDN urls
   #cdn_url:
@@ -10,20 +12,20 @@ defaults: &defaults
     memory_limit:
   debug_assets: true
   mandatory_keys:     [layer_opts, sql_api, varnish_management, redis, session_domain]
-  session_domain:     'cartodb.localhost'
+  session_domain:     '{{{stack_fqdn}}}'   # MUSTACHE. Was: 'cartodb.localhost'
   # If activated, urls will use usernames in format //SESSION_DOMAIN/user/USERNAME and ignore subdomains if present
   subdomainless_urls: true
-  http_port:           # 3000 # nil|integer. HTTP port to use when building urls. Leave empty to use default (80)
-  https_port:          # nil|integer. HTTPS port to use when building urls. Leave empty to use default (443)
-  secret_token:       '71c2b25921b84a1cb21c71503ab8fb23'
-  account_host:       'cartodb.localhost:3000'
+  http_port:
+  https_port:
+  secret_token:       '{{{cartodb_secret_token}}}' # MUSTACHE
+  account_host:       '{{{stack_fqdn}}}:{{{cartodb_listen_port}}}'  # MUSTACHE. Was: 'cartodb.localhost:3000'
   # Here you can define other hosts different to account_host that also will be CORS enabled
   # cors_enabled_hosts:
   #   - example.com
   #   - foo.bar
   #   - carto.dev
   account_path:       '/account'
-  vizjson_cache_domains: ['.localhost']
+  vizjson_cache_domains: ['{{{stack_fqdn}}}','.{{{stack_domain}}}'] # MUSTACHE. Was: '.localhost'
   data_library:
     username:         'common-data'
     path:             '/data-library'
@@ -33,33 +35,33 @@ defaults: &defaults
   tiler:
     filter: 'mapnik'
     internal:
-      protocol:      'http'
-      domain:        'cartodb.localhost'
-      port:          '80'
-      verifycert:     false
-    private:
-      protocol:      'http'
-      domain:        'cartodb.localhost'
-      port:          '80'
-      verifycert:     false
+      protocol:      '{{{windshaft_scheme}}}'   # MUSTACHE. Was: 'http'
+      domain:        '{{{windshaft_host}}}'     # MUSTACHE. Was: 'cartodb.localhost'
+      port:          '{{{windshaft_listen_port}}}'     # MUSTACHE. Was: '80'
+      verifycert:    false
+    private:    
+      protocol:      '{{{stack_scheme}}}'       # MUSTACHE. Was: 'http'
+      domain:        '{{{stack_fqdn}}}'         # MUSTACHE. Was 'cartodb.localhost'
+      port:          '{{{stack_listen_port}}}'  # MUSTACHE. Was '80'
+      verifycert:    false
     public:
-      protocol:      'http'
-      domain:        'cartodb.localhost'
-      port:          '80'
+      protocol:      '{{{stack_scheme}}}'       # MUSTACHE. Was 'http'
+      domain:        '{{{stack_fqdn}}}'         # MUSTACHE. Was 'cartodb.localhost'
+      port:          '{{{stack_listen_port}}}'  # MUSTACHE. Was '80'
       verifycert:     false
   sql_api:
     private:
-      protocol:   'http'
-      domain:     'cartodb.localhost'
+      protocol:   '{{{stack_scheme}}}'          # MUSTACHE. Was 'http'
+      domain:     '{{{stack_fqdn}}}'            # MUSTACHE. Was 'cartodb.localhost'
       endpoint:   '/api/v2/sql'
-      port:       80
+      port:       '{{{stack_listen_port}}}'     # MUSTACHE. Was 80
     public:
-      protocol:   'http'
-      domain:     'cartodb.localhost'
+      protocol:   '{{{stack_scheme}}}'          # MUSTACHE. Was 'http'
+      domain:     '{{{stack_fqdn}}}'            # MUSTACHE. Was 'cartodb.localhost'
       endpoint:   '/api/v2/sql'
-      port:       80
+      port:       '{{{stack_listen_port}}}'     # MUSTACHE. Was 80
   api_requests_service_url: ''
-  developers_host:    'http://developers.cartodb.localhost:3000'
+  developers_host:    '{{{stack_scheme}}}://developers.{{{stack_fqdn}}}:{{{stack_listen_port}}}' # MUSTACHE. Was 'http://developers.cartodb.localhost:3000'
   google_analytics:
     primary:          ''
     embeds:           ''
@@ -127,18 +129,18 @@ defaults: &defaults
   #       like_map: ''
   #       trending_map: ''
   common_data:
-    protocol: 'https'
-    username: 'common-data'
-    base_url: 'https://common-data.carto.com'
-    format: 'gpkg'
-    generate_every: 86400
+    protocol: 'https'                           # MUSTACHE. Was 'https'
+    username: 'common-data'                     # MUSTACHE. Was 'common-data'
+    base_url: 'https://common-data.carto.com'   # MUSTACHE. Was 'https://common-data.carto.com'
+    format: 'gpkg'                              # MUSTACHE. Was 'gpkg'
+    generate_every: 86400                       # MUSTACHE. Was 86400
   explore_api:
     username: ''
   # aggregation_tables:
-  #   host: 'localhost'
-  #   port: '5432'
-  #   dbname: 'dataservices_db'
-  #   username: 'geocoder_api'
+  #   host: '{{{postgis_host}}}'                     # MUSTACHE. Was 'localhost'
+  #   port: '{{{postgis_listen_port}}}'                          # MUSTACHE. Was '5432'
+  #   dbname: '{{{geocoder_db_name}}}'             # MUSTACHE. Was 'dataservices_db'
+  #   username: '{{{geocoder_pg_role_name}}}'              # MUSTACHE. Was 'geocoder_api'
   #   password: ''
   #   tables:
   #     admin0: 'ne_admin0_v3'
@@ -146,7 +148,7 @@ defaults: &defaults
   reports:
     mail_to: ''
   mailer:
-    from: 'cartodb.localhost <support@cartodb.localhost>'
+    from: '{{{stack_fqdn}}} <support@{{{stack_fqdn}}}>'   # MUSTACHE. Was 'cartodb.localhost <support@cartodb.localhost>'
     address: ''
     port: ''
     user_name: ''
@@ -155,25 +157,25 @@ defaults: &defaults
     enable_starttls_auto: ''
   varnish_management:
     critical: false
-    host: '127.0.0.1'
-    port: 6082
-    http_port: 6081
+    host: '{{{varnish_host}}}'       # MUSTACHE. Was '127.0.0.1'
+    port: '{{{varnish_telnet_port}}}'              # MUSTACHE. Was 6082
+    http_port: '{{{varnish_http_port}}}'         # MUSTACHE. Was 6081
     purge_command: 'purge'
     retries: 5
     timeout: 5
     # 'warning' or 'error'
     trigger_verbose: true
-  invalidation_service:
-    enabled: false
-    host: '127.0.0.1'
-    port: 3142
-    retries: 5 # number of retries before considering failure
-    critical: false # either the failure is considered an error or a warning
-    timeout: 5 # socket timeout
-    trigger_verbose: true
+#  invalidation_service:
+#    enabled: false
+#    host: '127.0.0.1'
+#    port: 3142
+#    retries: 5 # number of retries before considering failure
+#    critical: false # either the failure is considered an error or a warning
+#    timeout: 5 # socket timeout
+#    trigger_verbose: true
   redis:
-    host: '127.0.0.1'
-    port: 6379
+    host: '{{{redis_host}}}'           # MUSTACHE. Was '127.0.0.1'
+    port: '{{{redis_listen_port}}}'                  # MUSTACHE. Was 6379
     connect_timeout: 2
     read_timeout: 3
     write_timeout: 5
@@ -186,9 +188,9 @@ defaults: &defaults
     # secondary:
     #   host: '127.0.0.1'
   org_metadata_api:
-    host: 'localhost.lan'
-    port: '3000'
-    username: "extension"
+    host: '{{{cartodb_host}}}'       # MUSTACHE. Was 'localhost.lan'
+    port: '{{{cartodb_listen_port}}}'                # MUSTACHE. Was '3000'
+    username: "extension"       
     password: "elephant"
     timeout: 10
   superadmin:
@@ -215,10 +217,10 @@ defaults: &defaults
     tomtom:
       search_bar_api_key: ''
     # api:
-    #   host: 'localhost'
-    #   port: '5432'
-    #   dbname: 'dataservices_db'
-    #   user: 'geocoder_api'
+    #   host: '{{{postgis_host}}}'           # MUSTACHE. Was 'localhost'
+    #   port: '{{{postgis_listen_port}}}'                # MUSTACHE. Was '5432'
+    #   dbname: '{{{geocoder_db_name}}}'   # MUSTACHE. Was 'dataservices_db'
+    #   user: '{{{geocoder_pg_role_name}}}'        # MUSTACHE. Was 'geocoder_api'
   user_migrator:
     user_exports_folder: '/tmp/user_exports'
     user_imports_folder: '/tmp/user_imports'
@@ -296,12 +298,12 @@ defaults: &defaults
         interactivity:      "cartodb_id"
         debug:              false
         visible:            true
-        tiler_domain:       "cartodb.localhost"
-        tiler_port:         "80"
-        tiler_protocol:     "http"
-        sql_domain:         "cartodb.localhost"
-        sql_port:           "80"
-        sql_protocol:       "http"
+        tiler_domain:       "{{{stack_fqdn}}}"     # MUSTACHE. Was 'cartodb.localhost'
+        tiler_port:         "{{{stack_listen_port}}}"                    # MUSTACHE. Was "80"
+        tiler_protocol:     "{{{stack_scheme}}}"                  # MUSTACHE. Was "http"
+        sql_domain:         "{{{stack_fqdn}}}"     # MUSTACHE. Was "cartodb.localhost"
+        sql_port:           "{{{stack_listen_port}}}"                    # MUSTACHE. Was "80"
+        sql_protocol:       "{{{stack_scheme}}}"                  # MUSTACHE. Was "http"
         extra_params:       { cache_policy: 'persist' }
         tile_style_history: []
         style_version:      "2.1.1"
@@ -311,7 +313,7 @@ defaults: &defaults
       kind: "background"
       options: { color: '#ffffff' }
   cartodb_com_hosted: false
-  cartodb_central_domain_name: 'cartodb.localhost'
+  cartodb_central_domain_name: '{{{stack_fqdn}}}'  # MUSTACHE. Was 'cartodb.localhost'
   aws:
     s3:
       access_key_id: "test"
@@ -328,7 +330,7 @@ defaults: &defaults
     #   max_size_in_bytes: 1048576 # Optional, default is 1 MB
     #   location: 'organization_assets' # Optional subdirectory for local assets, default is 'organization_assets'
   app_assets:
-    asset_host: "//cartodb.localhost"
+    asset_host: "//{{{stack_fqdn}}}"   # MUSTACHE. Was "//cartodb.localhost"
   avatars:
     gravatar_enabled: true
     base_url: '/assets/unversioned/images/avatars'
@@ -738,28 +740,9 @@ defaults: &defaults
 
 development:
   <<: *defaults
-  #http_port: 3000
-  varnish_management:
-    critical: false
-    host: '127.0.0.1'
-    port: 6082
-    purge_command: 'purge'
-    url_purge_command: 'url.purge'
-    retries: 5
-    timeout: 5
 
 test:
   <<: *defaults
-  http_port: 53716
-  redis:
-    host: '127.0.0.1'
-    port: 6335
-  enforce_non_empty_layer_css: false
-  api_requests_es_service:
-    url: "http://api-calls-service.cartodb.localhost/search"
-    body: ""
-  session_domain:     '.localhost.lan'
-  subdomainless_urls: false
 
 staging:
   <<: *defaults
