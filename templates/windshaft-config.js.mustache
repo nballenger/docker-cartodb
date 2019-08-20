@@ -88,7 +88,7 @@ var config = {
     enable_cors: true,
     cache_enabled: false,
     log_format: ':req[X-Real-IP] :method :req[Host]:url :status :response-time ms -> :res[Content-Type] (:res[X-Tiler-Profiler])',
-    log_filename: undefined,
+    log_filename: 'logs/windshaft.log',
     postgres_auth_pass: '<%= user_password %>',
     mapnik_version: undefined,
     mapnik_tile_format: 'png8:m=h',
