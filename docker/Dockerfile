@@ -171,9 +171,12 @@ RUN curl https://bootstrap.pypa.io/get-pip.py | python \
 #### SQL API NODE APPLICATION ################################################
 ARG SQLAPI_VERSION="master"
 
+# Note the double install is not typo, this is necessary or some packages
+# are not correctly installed. :/
 RUN git clone --recursive git://github.com/CartoDB/CartoDB-SQL-API.git \
  && cd CartoDB-SQL-API \
  && git checkout $SQLAPI_VERSION \
+ && npm install \
  && npm install
 
 #### WINDSHAFT (MAPS API) NODE APPLICATION ###################################
@@ -314,7 +317,15 @@ RUN service postgresql start \
  && service postgresql stop \
  && perl -pi.bak -e 's/^bind 127.0.0.1 ::1$/bind 0.0.0.0/' /etc/redis/redis.conf
 
+COPY ./ssl/* /etc/ssl/
+COPY ./ssl/*CA.pem /usr/local/share/ca-certificates/osscartoCA.crt
+
+RUN chmod 644 /etc/ssl/*.crt \
+ && chmod 640 /etc/ssl/*.key \
+ && update-ca-certificates
+
 EXPOSE 80
+EXPOSE 443
 
 ENV GDAL_DATA /usr/share/gdal/2.2
 
