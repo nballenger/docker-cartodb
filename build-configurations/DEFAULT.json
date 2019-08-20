@@ -1,10 +1,10 @@
 {
     "carto_env": "development",
 
-    "stack_scheme": "http",
+    "stack_scheme": "https",
     "stack_fqdn": "cartodb.localhost",
     "stack_domain": "localhost",
-    "stack_listen_port": "80",
+    "stack_listen_port": "443",
 
     "user_db_basename": "cartodb_dev_user",
     "db_user_basename": "development_cartodb_user",
@@ -47,22 +47,22 @@
     "windshaft_listen_port": "8181",
     "windshaft_host": "127.0.0.1",
 
-    "crankshaft_version": "0.8.2",
-    "sqlapi_version": "3.0.0",
-    "windshaft_version": "7.1.0",
-    "cartodb_version": "v4.29.0",
-    "dataservices_version": "0.0.2",
-    "dataservices_api_server_version": "0.35.1-server",
-    "dataservices_api_client_version": "0.26.2-client",
+    "crankshaft_version": "0.8.2",                                              
+    "sqlapi_version": "3.0.0",                                                  
+    "windshaft_version": "7.1.0",                                               
+    "cartodb_version": "v4.29.0",                                               
+    "dataservices_version": "0.0.2",                                            
+    "dataservices_api_server_version": "0.35.1-server",                         
+    "dataservices_api_client_version": "0.26.2-client",                         
     "observatory_version": "1.9.0",
 
     "user_account_user_name": "dev",
     "user_account_password": "pass1234",
     "user_admin_password": "pass1234",
-    "user_account_email": "NONE",
+    "user_account_email": "nballeng+user@gmail.com",
 
     "org_account_org_name": "example",
     "org_account_user_name": "admin4example",
-    "org_account_email": "NONE",
+    "org_account_email": "nballeng+org@gmail.com",
     "org_account_password": "pass1234"
 }
