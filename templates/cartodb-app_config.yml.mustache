@@ -25,7 +25,7 @@ defaults: &defaults
   #   - foo.bar
   #   - carto.dev
   account_path:       '/account'
-  vizjson_cache_domains: ['.{{{stack_domain}}}'] # MUSTACHE. Was: '.localhost'
+  vizjson_cache_domains: ['{{{stack_fqdn}}}','.{{{stack_domain}}}'] # MUSTACHE. Was: '.localhost'
   data_library:
     username:         'common-data'
     path:             '/data-library'
