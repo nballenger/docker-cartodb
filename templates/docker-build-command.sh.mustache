@@ -4,7 +4,39 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
 
 DOCKER_BUILD_DIR="${SCRIPT_DIR}/docker"
 
-docker build --tag env-aware-sver:NICKTEST \
+REPO_TAG="env-aware-sver:latest"
+
+function display_help {
+    local help_text=''
+    IFS='' read -r -d '' help_text <<EOF
+
+Usage: $SCRIPT_NAME [-t|--tag repository:tag]
+
+Purpose: Triggers a Docker build using the appropriate --build-arg flags and
+         values from the build configuration this script was generated from.
+         View the file source or templates/docker-build-command.sh.mustache
+         to see the merge values.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            display_help
+            exit 0
+            ;;
+        -t|--tag)
+            shift
+            REPO_TAG=$1
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+docker build --tag ${REPO_TAG} \
     --build-arg CRANKSHAFT_VERSION="{{{crankshaft_version}}}" \
     --build-arg SQLAPI_VERSION="{{{sqlapi_version}}}" \
     --build-arg WINDSHAFT_VERSION="{{{windshaft_version}}}" \
