@@ -7,5 +7,6 @@ docker/ssl/*
 build-configurations/*
 !build-configurations/DEFAULT.json
 !build-configurations/README.md
+!build-configurations/examples
 
 docker-build-command.sh
