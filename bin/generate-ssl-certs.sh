@@ -15,9 +15,15 @@ Usage: $SCRIPT_NAME [<OPTIONS>]
 
 Purpose: Generates certificates for configuring the stack to use HTTPS locally.
 
-Options:    -h|--help
-            -f|--force
-            -q|--quiet
+Options:    -h|--help       Display this message and exit.
+
+            -f|--force      (Re-)generate the CA root certificate, even if one
+                            already exists in docker/ssl. If you do this, it
+                            will be necessary to re-add the root cert .pem file
+                            to your local trusted certificate store in order to
+                            have the site certificate trusted by browsers.
+
+            -q|--quiet      Suppress incidental output.
 
             --subdomain <STRING>
             --domain <STRING>
@@ -81,6 +87,8 @@ done
 FQDN="${SUBDOMAIN}.${DOMAIN}"
 COMMON_NAME="${FQDN}"
 PASSWORD="abc123def"
+OUTPUT_DEVICE="1"   # Output to STDOUT by default
+if [[ $QUIET = "yes" ]]; then OUTPUT_DEVICE=/dev/null; fi
 
 SSL_DIRECTORY="${REPO_ROOT}/docker/ssl"
 mkdir -p $SSL_DIRECTORY
@@ -104,25 +112,25 @@ function echo_if_unquiet() {
 
 if [ ! -f ${CA_KEYFILE} ] || [ ! -f ${CA_ROOTCERT} ] || [ "$FORCE" == "yes" ]; then
     echo_if_unquiet "Generating private key for CA root certificate..."
-    openssl genrsa -des3 -passout pass:${PASSWORD} -out ${CA_KEYFILE} 2048
+    openssl genrsa -des3 -passout pass:${PASSWORD} -out ${CA_KEYFILE} 2048 1>&${OUTPUT_DEVICE} 2>&1
 
     echo_if_unquiet "Removing passphrase from CA root cert key..."
-    openssl rsa -in ${CA_KEYFILE} -passin pass:${PASSWORD} -out ${CA_KEYFILE}
+    openssl rsa -in ${CA_KEYFILE} -passin pass:${PASSWORD} -out ${CA_KEYFILE} 1>&${OUTPUT_DEVICE} 2>&1
 
     echo_if_unquiet "Generating root certificate from CA root cert key..."
     openssl req -x509 -new -nodes -key ${CA_KEYFILE} -sha256 -days 1825 -out ${CA_ROOTCERT} \
-        -subj "/C=${COUNTRY}/ST=${STATE}/L=${LOCALITY}/O=${ORGANIZATION}/OU=$ORG_UNIT/CN=${COMMON_NAME}/emailAddress=${EMAIL}"
+        -subj "/C=${COUNTRY}/ST=${STATE}/L=${LOCALITY}/O=${ORGANIZATION}/OU=$ORG_UNIT/CN=${COMMON_NAME}/emailAddress=${EMAIL}" 1>&${OUTPUT_DEVICE} 2>&1
 else
-    echo_if_unquiet "\n*******\n\nSkipping generation of CA root cert key and root cert, as they already exist. Use --force to force regeneration of the .key and .pem files for the CA. You will have to reinstall the .pem file to your local trusted CAs if you do so.\n\n*******\n"
+    echo_if_unquiet "\n*******\n\nSkipping generation of CA root cert key and root cert, as they already exist.\nUse --force to force regeneration of the .key and .pem files for the CA.\nYou will have to reinstall the .pem file to your local trusted CAs if you do so.\n\n*******\n"
 fi
 
 echo_if_unquiet "Generating private key for SSL certificate..."
-openssl genrsa -out ${SSL_KEYFILE} 2048
+openssl genrsa -out ${SSL_KEYFILE} 2048 1>&${OUTPUT_DEVICE} 2>&1
 
 CSR_SUBJ="/C=${COUNTRY}/ST=${STATE}/L=${LOCALITY}/O=${ORGANIZATION}/OU=${ORG_UNIT}/CN=${FQDN}/emailAddress=${EMAIL}"
 
 echo_if_unquiet "Creating certificate signing request for SSL cert, against CA root cert..."
-openssl req -new -key ${SSL_KEYFILE} -out ${SSL_CSRFILE} -subj "${CSR_SUBJ}" 
+openssl req -new -key ${SSL_KEYFILE} -out ${SSL_CSRFILE} -subj "${CSR_SUBJ}" 1>&${OUTPUT_DEVICE} 2>&1
 
 SSL_CONFIG=""
 IFS='' read -r -d '' SSL_CONFIG <<EOF
@@ -133,4 +141,4 @@ subjectAltName=DNS:${FQDN}
 EOF
 
 openssl x509 -req -in ${SSL_CSRFILE} -CA ${CA_ROOTCERT} -CAkey ${CA_KEYFILE} -CAcreateserial \
-    -out ${SSL_CERTFILE} -days 1825 -sha256 -extfile <(printf "$SSL_CONFIG")
+    -out ${SSL_CERTFILE} -days 1825 -sha256 -extfile <(printf "$SSL_CONFIG") 1>&${OUTPUT_DEVICE} 2>&1
