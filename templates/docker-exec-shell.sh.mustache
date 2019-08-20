@@ -1,0 +1,39 @@
+#!/bin/bash -e
+SCRIPT_NAME=$0
+
+BUILD_CONF="DEFAULT"
+REPO_TAG="osscarto-single:$BUILD_CONF"
+
+function display_help {
+    local help_text=''
+    IFS='' read -r -d '' help_text <<EOF
+
+Usage: $SCRIPT_NAME [-t REPO_TAG]
+
+Purpose: Starts an interactive bash shell on the running container.
+
+Options:  -t|--tag REPO_TAG     A full repository tag. Defaults to osscarto-single:DEFAULT
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            display_help
+            exit 0
+            ;;
+        -t|--tag)
+            shift
+            REPO_TAG=$1
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+CONTAINER_ID=$(docker ps | grep $REPO_TAG | cut -d ' ' -f 1)
+CONTAINER_NAME=$(docker ps -aq --filter="id=$CONTAINER_ID" --format='{{.Names}}')
+
+docker exec -it $CONTAINER_NAME /bin/bash

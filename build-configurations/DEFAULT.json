@@ -2,7 +2,7 @@
     "carto_env": "development",
 
     "stack_scheme": "https",
-    "stack_fqdn": "cartodb.localhost",
+    "stack_fqdn": "osscarto-single.localhost",
     "stack_domain": "localhost",
     "stack_listen_port": "443",
 

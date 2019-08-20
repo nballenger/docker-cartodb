@@ -17,47 +17,54 @@ Purpose: Generates certificates for configuring the stack to use HTTPS locally.
 
          The script generates the following files, in 'docker/ssl', based on
          the values given for SUBDOMAIN and DOMAIN. Assuming the defaults of
-         'cartodb' and 'localhost', those files would be:
+         'osscarto-single' and 'localhost', those files would be:
 
-           cartodbCA.key            Cryptographic key that the Certificate
+           osscarto-singleCA.key    Cryptographic key that the Certificate
                                     Authority root certificate is based on.
 
-           cartodbCA.pem            The Certificate Authority root certificate.
+           osscarto-singleCA.pem    The Certificate Authority root certificate.
 
-           cartodbCA.srl            List of serial numbers already used by the
+           osscarto-singleCA.srl    List of serial numbers already used by the
                                     CA to create unique certificates.
 
-           cartodb.localhost.key    Cryptographic key that the SSL certificate
-                                    is based on.
+           osscarto-single.localhost.key   Cryptographic key that the SSL certificate
+                                           is based on.
 
-           cartodb.localhost.csr    Certificate signing request for the SSL
-                                    certificate, which allows it to be signed
-                                    via the Certificate Authority root cert.
+           osscarto-single.localhost.csr   Certificate signing request for the SSL
+                                           certificate, which allows it to be signed
+                                           via the Certificate Authority root cert.
 
-           cartodb.localhost.crt    SSL certificate generated using the SSL key,
-                                    the CA root certificate, and the certificate
-                                    signing request.
+           osscarto-single.localhost.crt    SSL certificate generated using the SSL key,
+                                            the CA root certificate, and the certificate
+                                            signing request.
 
-         Note: If the cartodbCA.key and cartodbCA.pem files are found to
+         Note: If the osscarto-singleCA.key and osscarto-singleCA.pem files are found to
                already exist, they will not be recreated unless you use the
                --force flag. This is so that you won't have to reimport the
                .pem file into your development machine's trusted CA list every
                time you regenerate the SSL certificates.
 
-Options:    -h|--help       Display this message and exit.
+Options:    -h|--help         Display this message and exit.
 
-            -f|--force      (Re-)generate the CA root certificate, even if one
-                            already exists in docker/ssl. If you do this, it
-                            will be necessary to re-add the root cert .pem file
-                            to your local trusted certificate store in order to
-                            have the site certificate trusted by browsers.
+            -f|--force        (Re-)generate the CA root certificate, even if one
+                              already exists in docker/ssl. If you do this, it
+                              will be necessary to re-add the root cert .pem file
+                              to your local trusted certificate store in order to
+                              have the site certificate trusted by browsers.
 
-            -q|--quiet      Suppress incidental output.
+            -q|--quiet        Suppress incidental output. Implies -y.
+
+            -v|--verbose      Include output from commands.
+
+            -i|--interactive  Use interactive mode to gather SSL cert settings.
+                              Disallows --quiet.
+
+            -y                Do not ask for confirmation of settings.
 
             --subdomain <STRING>    Subdomain to use in constructing the FQDN
                                     used as the 'Common Name' in generating the
                                     SSL certificate for the host. Defaults to
-                                    'cartodb'.
+                                    'osscarto-single'.
 
             --domain <STRING>       Domain + TLD to use in constructing the
                                     FQDN used as the 'Common Name' in the
@@ -91,8 +98,11 @@ EOF
 # CLI arg defaults
 FORCE="no"
 QUIET="no"
+VERBOSE="no"
+AUTORUN="no"
+INTERACTIVE="no"
 
-SUBDOMAIN="cartodb"
+SUBDOMAIN="osscarto-single"
 DOMAIN="localhost"
 COUNTRY="US"
 STATE="Vermont"
@@ -110,6 +120,12 @@ while [[ $# -gt 0 ]]; do
             FORCE="yes"; shift; ;;
         -q|--quiet)
             QUIET="yes"; shift; ;;
+        -v|--verbose)
+            VERBOSE="yes"; shift; ;;
+        -i|--interactive)
+            INTERACTIVE="yes"; shift; ;;
+        -y)
+            AUTORUN="yes"; shift; ;;
         --subdomain)
             shift; SUBDOMAIN="$1"; shift; ;;
         --domain)
@@ -131,12 +147,62 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+OUTPUT_DEVICE="/dev/null"   # Output nothing from ssl commands by default
+if [[ $VERBOSE = "yes" ]]; then 
+    QUIET="no"
+    OUTPUT_DEVICE="1" # stdout file handle
+fi
+
+if [[ $INTERACTIVE = "yes" ]]; then
+    # --quiet doesn't work with --interactive
+    QUIET="no"
+
+    echo "The following values will be used to construct the SSL files."
+    read -p "Subdomain [$SUBDOMAIN]: " subdomain_input
+    SUBDOMAIN=${subdomain_input:-$SUBDOMAIN}
+    read -p "Domain [$DOMAIN]: " domain_input
+    DOMAIN=${domain_input:-$DOMAIN}
+    read -p "Country code [$COUNTRY]: " country_input
+    COUNTRY=${country_input:-$COUNTRY}
+    read -p "State [$STATE]: " state_input
+    STATE=${state_input:-$STATE}
+    read -p "Locality [$LOCALITY]: " locality_input
+    LOCALITY=${locality_input:-$LOCALITY}
+    read -p "Organization [$ORGANIZATION]: " organization_input
+    ORGANIZATION=${organization_input:-$ORGANIZATION}
+    read -p "Organizational unit [$ORG_UNIT]: " org_unit_input
+    ORG_UNIT=${org_unit_input:-$ORG_UNIT}
+    read -p "Email address [$EMAIL]: " email_input
+    EMAIL=${email_input:-$EMAIL}
+fi
+
+if [[ $QUIET != "yes" ]]; then
+    echo "The certificate files will generate with these values:"
+    echo ""
+    echo "Subdomain:     $SUBDOMAIN"
+    echo "Domain:        $DOMAIN"
+    echo "Country code:  $COUNTRY"
+    echo "State:         $STATE"
+    echo "Locality:      $LOCALITY"
+    echo "Organization:  $ORGANIZATION"
+    echo "Org unit:      $ORG_UNIT"
+    echo "Email:         $EMAIL"
+    echo ""
+
+    if [[ $AUTORUN != "yes" ]]; then
+        printf "Proceed? [N/y]: "
+        read AUTORUN
+    fi
+fi
+
+if [[ ! $AUTORUN =~ ^[Yy][eE]?[sS]?$ ]]; then exit 1; fi
+
 # Imputed values
 FQDN="${SUBDOMAIN}.${DOMAIN}"
+FQDN=$(echo $FQDN | sed 's/^\.//')  # remove leading period if no subdomain
+if [[ $FQDN = $DOMAIN ]]; then SUBDOMAIN=$DOMAIN; fi
 COMMON_NAME="${FQDN}"
 PASSWORD="abc123def"
-OUTPUT_DEVICE="1"   # Output to STDOUT by default
-if [[ $QUIET = "yes" ]]; then OUTPUT_DEVICE=/dev/null; fi
 
 SSL_DIRECTORY="${REPO_ROOT}/docker/ssl"
 mkdir -p $SSL_DIRECTORY
@@ -190,3 +256,23 @@ EOF
 
 openssl x509 -req -in ${SSL_CSRFILE} -CA ${CA_ROOTCERT} -CAkey ${CA_KEYFILE} -CAcreateserial \
     -out ${SSL_CERTFILE} -days 1825 -sha256 -extfile <(printf "$SSL_CONFIG") 1>&${OUTPUT_DEVICE} 2>&1
+
+echo ""
+echo "************************************************************************"
+echo "*                                                                      "
+echo "* SSL files have been generated to cover the hostname:                 "
+echo "*                                                                      "
+echo "*                    $FQDN                                             "
+echo "*                                                                      "
+echo "* In order to use them, you must take the following manual steps:      "
+echo "*                                                                      "
+echo "*    1) Add the file docker/ssl/${SUBDOMAIN}CA.pem to your machine's   "
+echo "*       trusted certificate store, so that your browser can use it to  "
+echo "*       authenticate the certificate which Nginx uses for signing.     "
+echo "*    2) Add the following line to your /etc/hosts file:                "
+echo "*                                                                      "
+echo "*       127.0.0.1    $FQDN                                             "
+echo "*                                                                      "
+echo "************************************************************************"
+echo ""
+

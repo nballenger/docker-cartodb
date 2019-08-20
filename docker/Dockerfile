@@ -269,7 +269,7 @@ ENV PATH /usr/local/rvm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/s
 ARG CARTODB_LISTEN_PORT="3000"
 ENV CARTODB_LISTEN_PORT=$CARTODB_LISTEN_PORT
 
-ARG STACK_FQDN="cartodb.localhost"
+ARG STACK_FQDN="osscarto-single.localhost"
 ENV STACK_FQDN=$STACK_FQDN
 
 ARG USER_ACCOUNT_USER_NAME="dev"

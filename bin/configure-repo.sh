@@ -53,6 +53,7 @@ DOCKER_CONF_DIR="${REPO_ROOT}/docker/config"
 BUILD_CONF_DIR="${REPO_ROOT}/build-configurations"
 BUILD_CONF_FILE="${BUILD_CONF_DIR}/${BUILD_CONF}.json"
 RENDER_SCRIPT="${REPO_ROOT}/bin/render-template.js"
+GENERATED_SCRIPTS_DIR="${REPO_ROOT}/bin/generated"
 
 if [[ ! -f $BUILD_CONF_FILE ]]; then
     echo "Build configuration '${BUILD_CONF}' did not resolve to a real file at $BUILD_CONF_FILE"
@@ -71,11 +72,46 @@ for template in ${CONF_TEMPLATES[@]}; do
 done
 
 BUILD_CMD_SCRIPT="docker-build-command.sh"
-BUILD_CMD_TEMPLATE="${REPO_ROOT}/templates/${BUILD_CMD_SCRIPT}.mustache"
+BUILD_CMD_TEMPLATE="${TEMPLATES_DIR}/${BUILD_CMD_SCRIPT}.mustache"
 
-printf "\n    Generating docker build command from build conf..."
-node $RENDER_SCRIPT $BUILD_CONF_FILE $BUILD_CMD_TEMPLATE > ${REPO_ROOT}/$BUILD_CMD_SCRIPT
-chmod 755 ${REPO_ROOT}/$BUILD_CMD_SCRIPT
+printf "\n    Generating docker build command script from build conf..."
+node $RENDER_SCRIPT $BUILD_CONF_FILE $BUILD_CMD_TEMPLATE > ${GENERATED_SCRIPTS_DIR}/$BUILD_CMD_SCRIPT
+chmod 755 ${GENERATED_SCRIPTS_DIR}/$BUILD_CMD_SCRIPT
+if [[ $BUILD_CONF != 'DEFAULT' ]]; then
+    sed -i "s/BUILD_CONF=\"DEFAULT\"/BUILD_CONF=\"$BUILD_CONF\"/" ${GENERATED_SCRIPTS_DIR}/$BUILD_CMD_SCRIPT
+fi
 printf "DONE\n"
 
-printf "\nConfig complete for $BUILD_CONF. To build with this configuration, use\n\n    ./docker-build-command.sh -t env-aware-sver:$BUILD_CONF\n\n"
+RUN_CMD_SCRIPT="docker-run-command.sh"
+RUN_CMD_TEMPLATE="${TEMPLATES_DIR}/${RUN_CMD_SCRIPT}.mustache"
+
+printf "\n    Generating docker run command script from build conf..."
+node $RENDER_SCRIPT $BUILD_CONF_FILE $RUN_CMD_TEMPLATE > ${GENERATED_SCRIPTS_DIR}/$RUN_CMD_SCRIPT
+chmod 755 ${GENERATED_SCRIPTS_DIR}/$RUN_CMD_SCRIPT
+if [[ $BUILD_CONF != 'DEFAULT' ]]; then
+    sed -i "s/BUILD_CONF=\"DEFAULT\"/BUILD_CONF=\"$BUILD_CONF\"/" ${GENERATED_SCRIPTS_DIR}/$RUN_CMD_SCRIPT
+fi
+printf "DONE\n"
+
+EXEC_CMD_SCRIPT="docker-exec-shell.sh"
+EXEC_CMD_TEMPLATE="${TEMPLATES_DIR}/${EXEC_CMD_SCRIPT}.mustache"
+
+printf "\n    Generating docker exec command script to open bash shell..."
+node $RENDER_SCRIPT $BUILD_CONF_FILE $EXEC_CMD_TEMPLATE > ${GENERATED_SCRIPTS_DIR}/$EXEC_CMD_SCRIPT
+chmod 755 ${GENERATED_SCRIPTS_DIR}/$EXEC_CMD_SCRIPT
+if [[ $BUILD_CONF != 'DEFAULT' ]]; then
+    sed -i "s/BUILD_CONF=\"DEFAULT\"/BUILD_CONF=\"$BUILD_CONF\"/" ${GENERATED_SCRIPTS_DIR}/$EXEC_CMD_SCRIPT
+fi
+printf "DONE\n"
+
+STOP_CMD_SCRIPT="docker-stop-command.sh"
+STOP_CMD_TEMPLATE="${TEMPLATES_DIR}/${STOP_CMD_SCRIPT}.mustache"
+
+printf "\n    Generating docker stop command script..."
+node $RENDER_SCRIPT $BUILD_CONF_FILE $STOP_CMD_TEMPLATE > ${GENERATED_SCRIPTS_DIR}/$STOP_CMD_SCRIPT
+chmod 755 ${GENERATED_SCRIPTS_DIR}/$STOP_CMD_SCRIPT
+if [[ $BUILD_CONF != 'DEFAULT' ]]; then
+    sed -i "s/BUILD_CONF=\"DEFAULT\"/BUILD_CONF=\"$BUILD_CONF\"/" ${GENERATED_SCRIPTS_DIR}/$STOP_CMD_SCRIPT
+fi
+printf "DONE\n"
+

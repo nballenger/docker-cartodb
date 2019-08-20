@@ -1,6 +1,8 @@
 *.swp
+
 docker/config/*
 !docker/config/README.md
+
 docker/ssl/*
 !docker/ssl/README.md
 
@@ -9,4 +11,5 @@ build-configurations/*
 !build-configurations/README.md
 !build-configurations/examples
 
-docker-build-command.sh
+bin/generated/*
+!bin/generated/README.md

@@ -1,0 +1,43 @@
+#!/bin/bash -e
+SCRIPT_NAME=$0
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd)"
+
+BUILD_CONF="DEFAULT"
+REPO_TAG="osscarto-single:$BUILD_CONF"
+
+function display_help {
+    local help_text=''
+    IFS='' read -r -d '' help_text <<EOF
+
+Usage: $SCRIPT_NAME [-t REPO_TAG]
+
+Purpose: Runs the docker container built by docker-build-command.sh.
+
+Options:  -t|--tag REPO_TAG     A full repository tag. Defaults to osscarto-single:DEFAULT
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            display_help
+            exit 0
+            ;;
+        -t|--tag)
+            shift
+            REPO_TAG=$1
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+CONTAINER_ID=$(docker run -d -p "{{{stack_listen_port}}}:{{{stack_listen_port}}}" -h "{{{stack_fqdn}}}" $REPO_TAG)
+
+echo ""
+echo "Container started from image $REPO_TAG with:"
+echo ""
+echo "      Container ID: $CONTAINER_ID"
+echo ""
