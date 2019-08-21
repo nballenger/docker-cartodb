@@ -16,7 +16,7 @@ var config = {
 {{=<% %>=}}
     resources_url_templates: {
         http: 'http://<% stack_fqdn %>/user/{{=it.user}}/api/v1/map',  // MUSTACHE. Was 'http://cartodb.localhost/user/{{=it.user}}/api/v1/map'
-        https: 'http://<% stack_fqdn %>/user/{{=it.user}}/api/v1/map'  // MUSTACHE. Was 'http://cartodb.localhost/user/{{=it.user}}/api/v1/map'
+        https: 'https://<% stack_fqdn %>/user/{{=it.user}}/api/v1/map'  // MUSTACHE. Was 'http://cartodb.localhost/user/{{=it.user}}/api/v1/map'
     },
 <%={{ }}=%> {{! revert mustache delimiters }}
 
