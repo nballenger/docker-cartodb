@@ -8,7 +8,7 @@ Instructions (assumes Linux or Mac OS):
     1. Generate configuration files for the various parts of the OSS Carto stack, in `docker/config`
     1. Generate scripts for building and interacting with a Docker image/container.
     1. Run the generated build script to create a Docker image named `osscarto-single:DEFAULT`
-1. Add the file `docker/ssl/osscarto-singleCA.pem` to your machine's trusted certificate store.
+1. Add the file `docker/ssl/osscarto-singleCA.pem` to your machine's trusted certificate store. (For instructions on doing so, see the Installing Your Root Certificate section [of this article about local HTTPS](https://deliciousbrains.com/ssl-certificate-authority-for-local-https-development/))
 1. Add the hostname `osscarto-single.localhost` to your `/etc/hosts` file:
 
     ```
